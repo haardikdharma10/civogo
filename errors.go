@@ -262,6 +262,12 @@ var (
 	DatabaseTemplateExistsError                  = constError("DatabaseTemplateExistsError")
 	DatabaseTemplateSaveFailedError              = constError("DatabaseTemplateSaveFailedError")
 	KubernetesClusterInvalidNameError            = constError("KubernetesClusterInvalidNameError")
+	UpdateAppNotAvailable                        = constError("UpdateAppNotAvailable")
+	UpdateAppKubemartError                       = constError("UpdateAppKubemartError")
+	DeleteAppNotAvailable                        = constError("DeleteAppNotAvailable")
+	DeleteAppIsNew                               = constError("DeleteAppIsNew")
+	DeleteAppIsNeededByOther                     = constError("DeleteAppIsNeededByOther")
+	DeleteAppKubemartError                       = constError("DeleteAppKubemartError")
 
 	AccountNotEnabledIncCardError     = constError("AccountNotEnabledIncCardError")
 	AccountNotEnabledWithoutCardError = constError("AccountNotEnabledWithoutCardError")
@@ -1022,6 +1028,24 @@ func decodeERROR(err error) error {
 		case "kubernetes_cluster_invalid_name":
 			err := errors.New(msg.String())
 			return KubernetesClusterInvalidNameError.wrap(err)
+		case "update_app_not_available":
+			err := errors.New(msg.String())
+			return UpdateAppNotAvailable.wrap(err)
+		case "update_app_kubemart_error":
+			err := errors.New(msg.String())
+			return UpdateAppKubemartError.wrap(err)
+		case "delete_app_not_available":
+			err := errors.New(msg.String())
+			return DeleteAppNotAvailable.wrap(err)
+		case "delete_app_is_new":
+			err := errors.New(msg.String())
+			return DeleteAppIsNew.wrap(err)
+		case "delete_app_is_needed_by_other":
+			err := errors.New(msg.String())
+			return DeleteAppIsNeededByOther.wrap(err)
+		case "delete_app_kubemart_error":
+			err := errors.New(msg.String())
+			return DeleteAppKubemartError.wrap(err)
 
 		default:
 			return UnknowError

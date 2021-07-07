@@ -43,6 +43,7 @@ type KubernetesPool struct {
 type KubernetesInstalledApplication struct {
 	Application   string                              `json:"application,omitempty"`
 	Name          string                              `json:"name,omitempty"`
+	Title         string                              `json:"title,omitempty"`
 	Version       string                              `json:"version,omitempty"`
 	Dependencies  []string                            `json:"dependencies,omitempty"`
 	Maintainer    string                              `json:"maintainer,omitempty"`
@@ -149,6 +150,10 @@ type KubernetesVersion struct {
 	Version string `json:"version"`
 	Type    string `json:"type"`
 	Default bool   `json:"default,omitempty"`
+}
+
+type KubernetesKubemartOperationResponse struct {
+	AppName string `json:"app_name"`
 }
 
 // ListKubernetesClusters returns all cluster of kubernetes in the account
@@ -260,6 +265,21 @@ func (c *Client) ListKubernetesMarketplaceApplications() ([]KubernetesMarketplac
 	return kubernetes, nil
 }
 
+// ListKubernetesKubemartMarketplaceApplications returns all application inside marketplace v2
+func (c *Client) ListKubernetesKubemartMarketplaceApplications() ([]KubernetesMarketplaceApplication, error) {
+	resp, err := c.SendGetRequest("/v2/kubernetes/applications?is_kubemart=true")
+	if err != nil {
+		return nil, decodeERROR(err)
+	}
+
+	kubernetes := make([]KubernetesMarketplaceApplication, 0)
+	if err = json.NewDecoder(bytes.NewReader(resp)).Decode(&kubernetes); err != nil {
+		return nil, err
+	}
+
+	return kubernetes, nil
+}
+
 // DeleteKubernetesCluster deletes a cluster
 func (c *Client) DeleteKubernetesCluster(id string) (*SimpleResponse, error) {
 	resp, err := c.SendDeleteRequest(fmt.Sprintf("/v2/kubernetes/clusters/%s", id))
@@ -296,4 +316,42 @@ func (c *Client) ListAvailableKubernetesVersions() ([]KubernetesVersion, error) 
 	}
 
 	return kubernetes, nil
+}
+
+// UpdateKubernetesApp will update marketplace v2 app. Will return `UpdateAppNotAvailable` error if cluster is legacy.
+func (c *Client) UpdateKubernetesApp(id, appName string) (*KubernetesKubemartOperationResponse, error) {
+	url := fmt.Sprintf("/v2/kubernetes/clusters/%s/update_app", id)
+	params := struct {
+		AppName string `json:"app_name,omitempty"`
+		Region  string `json:"region,omitempty"`
+	}{
+		AppName: appName,
+		Region:  c.Region,
+	}
+
+	resp, err := c.SendPutRequest(url, params)
+	if err != nil {
+		return nil, decodeERROR(err)
+	}
+
+	response := &KubernetesKubemartOperationResponse{}
+	if err = json.NewDecoder(bytes.NewReader(resp)).Decode(response); err != nil {
+		return nil, err
+	}
+	return response, nil
+}
+
+// DeleteKubernetesApp will delete marketplace v2 app. Will return `DeleteAppNotAvailable` error if cluster is legacy.
+func (c *Client) DeleteKubernetesApp(id, appName string) (*KubernetesKubemartOperationResponse, error) {
+	url := fmt.Sprintf("/v2/kubernetes/clusters/%s/delete_app?app_name=%s", id, appName)
+	resp, err := c.SendDeleteRequest(url)
+	if err != nil {
+		return nil, decodeERROR(err)
+	}
+
+	response := &KubernetesKubemartOperationResponse{}
+	if err = json.NewDecoder(bytes.NewReader(resp)).Decode(response); err != nil {
+		return nil, err
+	}
+	return response, nil
 }
