@@ -90,6 +90,9 @@ type Clienter interface {
 	GetKubernetesCluster(id string) (*KubernetesCluster, error)
 	UpdateKubernetesCluster(id string, i *KubernetesClusterConfig) (*KubernetesCluster, error)
 	ListKubernetesMarketplaceApplications() ([]KubernetesMarketplaceApplication, error)
+	ListKubernetesKubemartMarketplaceApplications() ([]KubernetesMarketplaceApplication, error)
+	UpdateKubernetesApp(id, appName string) (*KubernetesKubemartOperationResponse, error)
+	DeleteKubernetesApp(id, appName string) (*KubernetesKubemartOperationResponse, error)
 	DeleteKubernetesCluster(id string) (*SimpleResponse, error)
 	RecycleKubernetesCluster(id string, hostname string) (*SimpleResponse, error)
 	ListAvailableKubernetesVersions() ([]KubernetesVersion, error)
@@ -735,6 +738,11 @@ func (c *FakeClient) ListKubernetesMarketplaceApplications() ([]KubernetesMarket
 	return []KubernetesMarketplaceApplication{}, nil
 }
 
+// ListKubernetesKubemartMarketplaceApplications implemented in a fake way for automated tests
+func (c *FakeClient) ListKubernetesKubemartMarketplaceApplications() ([]KubernetesMarketplaceApplication, error) {
+	return []KubernetesMarketplaceApplication{}, nil
+}
+
 // DeleteKubernetesCluster implemented in a fake way for automated tests
 func (c *FakeClient) DeleteKubernetesCluster(id string) (*SimpleResponse, error) {
 	for i, cluster := range c.Clusters {
@@ -1271,4 +1279,12 @@ func (c *FakeClient) generatePublicIP() string {
 	s := rand.NewSource(time.Now().UnixNano())
 	r := rand.New(s)
 	return fmt.Sprintf("%v.%v.%v.%v", r.Intn(256), r.Intn(256), r.Intn(256), r.Intn(256))
+}
+
+func (c *FakeClient) UpdateKubernetesApp(id, appName string) (*KubernetesKubemartOperationResponse, error) {
+	return &KubernetesKubemartOperationResponse{AppName: "app-name"}, nil
+}
+
+func (c *FakeClient) DeleteKubernetesApp(id, appName string) (*KubernetesKubemartOperationResponse, error) {
+	return &KubernetesKubemartOperationResponse{AppName: "app-name"}, nil
 }

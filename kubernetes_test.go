@@ -550,6 +550,66 @@ func TestKubernetesMarketplaceApplication(t *testing.T) {
 	}
 }
 
+func TestKubernetesKubemartMarketplaceApplication(t *testing.T) {
+	client, server, _ := NewClientForTesting(map[string]string{
+		"/v2/kubernetes/applications": `[{
+		  "name": "MariaDB",
+		  "title": null,
+		  "version": "10.4.7",
+		  "default": null,
+		  "dependencies": ["Longhorn"],
+		  "maintainer": "hello@civo.com",
+		  "description": "MariaDB is a community-developed fork of MySQL intended to remain free under the GNU GPL.",
+		  "post_install": "Instructions go here\n",
+		  "url": "https://mariadb.com",
+		  "category": "database",
+		  "image_url": "https://api.civo.com/k3s-marketplace/mariadb.png",
+		  "plans": [{
+			"label": "5GB",
+			"configuration": {
+			  "VOLUME_SIZE": {
+				"value": "5Gi"
+			  }
+			}
+		  }, {
+			"label": "10GB",
+			"configuration": {
+			  "VOLUME_SIZE": {
+				"value": "10Gi"
+			  }
+			}
+		  }]
+		}]`,
+	})
+	defer server.Close()
+	got, err := client.ListKubernetesKubemartMarketplaceApplications()
+	if err != nil {
+		t.Errorf("Request returned an error: %s", err)
+		return
+	}
+
+	expected := []KubernetesMarketplaceApplication{{
+		Name:         "MariaDB",
+		Version:      "10.4.7",
+		Dependencies: []string{"Longhorn"},
+		Maintainer:   "hello@civo.com",
+		Description:  "MariaDB is a community-developed fork of MySQL intended to remain free under the GNU GPL.",
+		PostInstall:  "Instructions go here\n",
+		URL:          "https://mariadb.com",
+		Category:     "database",
+		Plans: []KubernetesMarketplacePlan{{
+			Label:         "5GB",
+			Configuration: map[string]KubernetesPlanConfiguration{"VOLUME_SIZE": {Value: "5Gi"}},
+		}, {
+			Label:         "10GB",
+			Configuration: map[string]KubernetesPlanConfiguration{"VOLUME_SIZE": {Value: "10Gi"}},
+		}},
+	}}
+	if !reflect.DeepEqual(got, expected) {
+		t.Errorf("Expected %+v, got %+v", expected, got)
+	}
+}
+
 func TestDeleteKubernetesClusters(t *testing.T) {
 	client, server, _ := NewClientForTesting(map[string]string{
 		"/v2/kubernetes/clusters/12346": `{"result": "success"}`,
@@ -614,6 +674,52 @@ func TestListAvailableKubernetesVersions(t *testing.T) {
 		Type:    "legacy",
 		Version: "0.8.1",
 	}}
+	if !reflect.DeepEqual(got, expected) {
+		t.Errorf("Expected %+v, got %+v", expected, got)
+	}
+}
+
+func TestUpdateKubernetesApp(t *testing.T) {
+	client, server, _ := NewClientForTesting(map[string]string{
+		"/v2/kubernetes/clusters/69a23478-a89e-41d2-97b1-6f4c341cee70/update_app": `{
+		  "app_name": "app-name"
+		}`,
+	})
+	defer server.Close()
+
+	got, err := client.UpdateKubernetesApp("69a23478-a89e-41d2-97b1-6f4c341cee70", "app-name")
+	if err != nil {
+		t.Errorf("Request returned an error: %s", err)
+		return
+	}
+
+	expected := &KubernetesKubemartOperationResponse{
+		AppName: "app-name",
+	}
+
+	if !reflect.DeepEqual(got, expected) {
+		t.Errorf("Expected %+v, got %+v", expected, got)
+	}
+}
+
+func TestDeleteKubernetesApp(t *testing.T) {
+	client, server, _ := NewClientForTesting(map[string]string{
+		"/v2/kubernetes/clusters/69a23478-a89e-41d2-97b1-6f4c341cee70/delete_app?app_name=app-name": `{
+			"app_name": "app-name"
+		}`,
+	})
+	defer server.Close()
+
+	got, err := client.DeleteKubernetesApp("69a23478-a89e-41d2-97b1-6f4c341cee70", "app-name")
+	if err != nil {
+		t.Errorf("Request returned an error: %s", err)
+		return
+	}
+
+	expected := &KubernetesKubemartOperationResponse{
+		AppName: "app-name",
+	}
+
 	if !reflect.DeepEqual(got, expected) {
 		t.Errorf("Expected %+v, got %+v", expected, got)
 	}
