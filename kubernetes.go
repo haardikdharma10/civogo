@@ -108,6 +108,7 @@ type KubernetesClusterConfig struct {
 	Tags              string                        `json:"tags,omitempty"`
 	Pools             []KubernetesClusterPoolConfig `json:"pools,omitempty"`
 	Applications      string                        `json:"applications,omitempty"`
+	KubemartEmail     string                        `json:"kubemart_email,omitempty"`
 }
 
 //KubernetesClusterPoolConfig is used to create a new cluster pool
