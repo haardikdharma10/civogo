@@ -35,7 +35,7 @@ func TestCreateRole(t *testing.T) {
 	})
 	defer server.Close()
 
-	got, err := client.CreateRole("Org Admin", "organisation.*")
+	got, err := client.CreateRole("Org Admin", "organisation.*", "1234")
 	if err != nil {
 		t.Errorf("Request returned an error: %s", err)
 		return

@@ -11,6 +11,7 @@ type Role struct {
 	ID          string    `json:"id"`
 	Name        string    `json:"name,omitempty"`
 	Permissions string    `json:"permissions,omitempty"`
+	AccountID   string    `json:"account_id,omitempty"`
 	BuiltIn     bool      `json:"built_in,omitempty"`
 	CreatedAt   time.Time `json:"created_at,omitempty"`
 	UpdatedAt   time.Time `json:"updated_at,omitempty"`
@@ -32,8 +33,8 @@ func (c *Client) ListRoles() ([]Role, error) {
 }
 
 // CreateRole creates a new role with a set of permissions for use within an organisation
-func (c *Client) CreateRole(name, permissions string) (*Role, error) {
-	data := map[string]string{"name": name, "permissions": permissions}
+func (c *Client) CreateRole(name, permissions, accountID string) (*Role, error) {
+	data := map[string]string{"name": name, "permissions": permissions, "account_id": accountID}
 	resp, err := c.SendPostRequest("/v2/roles", data)
 	if err != nil {
 		return nil, decodeError(err)
