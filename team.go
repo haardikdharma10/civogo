@@ -25,6 +25,7 @@ type TeamMember struct {
 	Roles       string    `json:"roles,omitempty"`
 	CreatedAt   time.Time `json:"created_at,omitempty"`
 	UpdatedAt   time.Time `json:"updated_at,omitempty"`
+	Label       string    `json:"label,omitempty"`
 }
 
 // ListTeams returns all teams for the current account
@@ -92,6 +93,20 @@ func (c *Client) FindTeam(search string) (*Team, error) {
 	}
 }
 
+func (c *Client) GetTeam() (*Team, error) {
+	resp, err := c.SendGetRequest("/v2/teams")
+	if err != nil {
+		return nil, decodeError(err)
+	}
+
+	team := &Team{}
+	if err := json.NewDecoder(bytes.NewReader(resp)).Decode(team); err != nil {
+		return nil, err
+	}
+
+	return team, nil
+}
+
 // RenameTeam changes the human set name for a team
 func (c *Client) RenameTeam(teamID, name string) (*Team, error) {
 	data := map[string]string{"name": name}
@@ -120,7 +135,7 @@ func (c *Client) DeleteTeam(id string) (*SimpleResponse, error) {
 
 // ListTeamMembers returns a list of all team members (and their permissions) in the specified team
 func (c *Client) ListTeamMembers(teamID string) ([]TeamMember, error) {
-	resp, err := c.SendGetRequest("/v2/teams/" + teamID + "/members")
+	resp, err := c.SendGetRequest(fmt.Sprintf("/v2/teams/%s/members", teamID))
 	if err != nil {
 		return nil, decodeError(err)
 	}
@@ -131,6 +146,66 @@ func (c *Client) ListTeamMembers(teamID string) ([]TeamMember, error) {
 	}
 
 	return teamMembers, nil
+}
+
+// //FindTeam finds a team by either part of the ID or part of the name
+// func (c *Client) FindTeamMember(teamID string) (*TeamMember, error) {
+// 	teamMembers, err := c.ListTeamMembers(teamID)
+// 	if err != nil {
+// 		return nil, decodeError(err)
+// 	}
+
+// 	exactMatch := false
+// 	partialMatchesCount := 0
+// 	result := TeamMember{}
+
+// 	for _, value := range teamMembers {
+// 		if value.TeamID == teamID {
+// 			exactMatch = true
+// 			result = value
+// 		} else if strings.Contains(value.TeamID, teamID) {
+// 			if !exactMatch {
+// 				result = value
+// 				partialMatchesCount++
+// 			}
+// 		}
+// 	}
+
+// 	if exactMatch || partialMatchesCount == 1 {
+// 		return &result, nil
+// 	} else if partialMatchesCount > 1 {
+// 		err := fmt.Errorf("unable to find %s team-member because there were multiple matches", teamID)
+// 		return nil, MultipleMatchesError.wrap(err)
+// 	} else {
+// 		err := fmt.Errorf("unable to find %s team-member, zero matches", teamID)
+// 		return nil, ZeroMatchesError.wrap(err)
+// 	}
+// }
+
+func (c *Client) FindTeamMember(teamID string, search string) (*TeamMember, error) {
+	teamMembers, err := c.ListTeamMembers(teamID)
+	if err != nil {
+		return nil, decodeError(err)
+	}
+
+	found := -1
+
+	for i, teamMember := range teamMembers {
+		if strings.Contains(teamMember.ID, search) {
+			if found != -1 {
+				err := fmt.Errorf("unable to find %s because there were multiple matches", search)
+				return nil, MultipleMatchesError.wrap(err)
+			}
+			found = i
+		}
+	}
+
+	if found == -1 {
+		err := fmt.Errorf("unable to find %s, zero matches", search)
+		return nil, ZeroMatchesError.wrap(err)
+	}
+
+	return &teamMembers[found], nil
 }
 
 // AddTeamMember adds a team member to the specified team, with permissions and roles (which are combinative)
